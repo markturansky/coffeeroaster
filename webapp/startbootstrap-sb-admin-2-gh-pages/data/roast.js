@@ -5,11 +5,11 @@ $(document).ready(function() {
     plot();
 
     function plot() {
-        var sin = [],
-            cos = [];
-        for (var i = 0; i < 12; i += 0.2) {
-            sin.push([i, Math.sin(i + offset)]);
-            cos.push([i, Math.cos(i + offset)]);
+        var heater = [];
+        for (var i = 0; i < 1200; i++) {
+            if (i % 2 == 0){
+                heater.push([i, i]);
+            }
         }
 
         var options = {
@@ -25,8 +25,8 @@ $(document).ready(function() {
                 hoverable: true //IMPORTANT! this is needed for tooltip to work
             },
             yaxis: {
-                min: -1.2,
-                max: 1.2
+                min: 0,
+                max: 1750,
             },
             tooltip: true,
             tooltipOpts: {
@@ -38,12 +38,9 @@ $(document).ready(function() {
             }
         };
 
-        var plotObj = $.plot($("#flot-line-chart"), [{
-                data: sin,
-                label: "sin(x)"
-            }, {
-                data: cos,
-                label: "cos(x)"
+        var plotObj = $.plot($("#roast-line-chart"), [{
+                data: heater,
+                label: "heater (F)"
             }],
             options);
     }
