@@ -4,7 +4,8 @@ import time, sys
 THERMO_ENV_DATA = 0x0A
 THERMO_BEAN_DATA = 0x0B
 
-board = Arduino("/dev/cu.wchusbserial1420")
+#board = Arduino("/dev/cu.wchusbserial1420")
+board = Arduino("/dev/ttyUSB0")
 
 isRunning = True
 timer = 0
