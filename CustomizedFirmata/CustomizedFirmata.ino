@@ -93,8 +93,8 @@ void loop()
   *((int *)envTempBytes) = envTemp;
   *((int *)beanTempBytes) = beanTemp;
     
-  Firmata.sendSysex(THERMO_ENV, 2, envTempBytes);
-  Firmata.sendSysex(THERMO_BEAN, 2, beanTempBytes);
+  Firmata.sendSysex(THERMO_ENV, 4, envTempBytes);
+  Firmata.sendSysex(THERMO_BEAN, 4, beanTempBytes);
    
   byte i;
 
