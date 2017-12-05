@@ -5,7 +5,7 @@ THERMO_ENV_DATA = 0x0A
 THERMO_BEAN_DATA = 0x0B
 
 #board = Arduino("/dev/cu.wchusbserial1420")
-board = Arduino("/dev/ttyUSB0")
+board = Arduino("/dev/ttyUSB1")
 
 isRunning = True
 timer = 0
@@ -78,13 +78,17 @@ $(document).ready(function() {
         output.flush()
 
 def printEnv(*args, **kwargs):
-    base = args[1] * 128
-    temp = base + args[0]
+    temp = args[0]
+    temp = temp + args[1] * 128
+    temp = temp + args[2] * 256
+    temp = temp + args[3] * 512
     components["EnvTemp"]["Status"] = temp
 
 def printBean(*args, **kwargs):
-    base = args[1] * 128
-    temp = base + args[0]
+    temp = args[0]
+    temp = temp + args[1] * 128
+    temp = temp + args[2] * 256
+    temp = temp + args[3] * 512    
     components["BeanTemp"]["Status"] = temp
 
 board.add_cmd_handler(THERMO_ENV_DATA, printEnv )
@@ -93,12 +97,12 @@ board.add_cmd_handler(THERMO_BEAN_DATA, printBean )
 
 components = {
     "Heater": {
-        "Pin": 12,
+        "Pin": 13,
         "Spec": 3,
         "Status": 0,
     },
     "DrawFan": {
-        "Pin": 10,
+        "Pin": 12,
         "Spec": 10,
         "Status": 0,
     },
@@ -156,6 +160,10 @@ while isRunning:
         refreshSpec()
         envTemp = components["EnvTemp"]["Status"]
         beanTemp = components["BeanTemp"]["Status"]
+
+        if components.has_key("TargetTemp"):
+            print "target temp ", components["TargetTemp"]
+        
         for c in components:
             if components[c].has_key("Pin"):
                 port = components[c]["Pin"]
@@ -164,6 +172,8 @@ while isRunning:
                 components[c]["Status"] = int(onOff)
         timer = timer + 1
         snapshot = components.copy()
+        if i % 10 == 0:
+            print snapshot
         roastdata.append(snapshot)
         saveGraphData()
         time.sleep(.5)
@@ -173,5 +183,3 @@ for c in components:
         board.digital[components[c]["Pin"]].write(0)
 
 board.exit()
-for r in roastdata:
-    print r
