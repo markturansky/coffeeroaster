@@ -5,11 +5,12 @@ THERMO_ENV_DATA = 0x0A
 THERMO_BEAN_DATA = 0x0B
 
 #board = Arduino("/dev/cu.wchusbserial1420")
-board = Arduino("/dev/ttyUSB1")
+board = Arduino("/dev/ttyUSB0")
 
 isRunning = True
 timer = 0
 roastdata = []
+normalizingAmount = 0
 
 def refreshSpec():
     global isRunning
@@ -77,11 +78,20 @@ $(document).ready(function() {
         output.write(out)
         output.flush()
 
+
+
+def normalizeTemps():
+    global normalizingAmount
+    env = components["EnvTemp"]["Status"]
+    bean = components["BeanTemp"]["Status"] = temp
+    normalizingAmount = env - bean
+    
 def printEnv(*args, **kwargs):
     temp = args[0]
     temp = temp + args[1] * 128
     temp = temp + args[2] * 256
     temp = temp + args[3] * 512
+    temp = temp - normalizingAmount
     components["EnvTemp"]["Status"] = temp
 
 def printBean(*args, **kwargs):
@@ -111,11 +121,17 @@ components = {
         "Spec": 6,
         "Status": 0,
     },
-    "DrumMotor": {
-        "Pin": 9,
-        "Spec": 8,
+    "LightRelay": {
+        "Pin": 8,
+        "Spec": 1,
         "Status": 0,
     },
+    "DrumRelay": {
+        "Pin": 9,
+        "Spec": 1,
+        "Status": 0,
+    },
+    
     "EnvTemp": {
         # "Pin" is not applicable
         "Spec": 0, # desired environment temperature
@@ -155,6 +171,10 @@ board.digital[13].mode = OUTPUT
 
 # loop in 10s chunks of time
 
+if isRunning == False:
+    normalizeTemps()
+    isRunning = True
+    
 while isRunning:
     for i in range(10):
         refreshSpec()
@@ -165,11 +185,13 @@ while isRunning:
             print "target temp ", components["TargetTemp"]
         
         for c in components:
-            if components[c].has_key("Pin"):
+            if components[c].has_key("Pin") and components[c].has_key("Spec"):
                 port = components[c]["Pin"]
                 onOff = pwm_profile[components[c]["Spec"]][i]
+                if components[c]["Spec"] != components[c]["Status"]:
+                    print c, "Diff!", components[c]["Spec"], components[c]["Status"]
                 board.digital[port].write(onOff)
-                components[c]["Status"] = int(onOff)
+                components[c]["Status"] = components[c]["Spec"]
         timer = timer + 1
         snapshot = components.copy()
         if i % 10 == 0:
