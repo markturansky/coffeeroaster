@@ -64,9 +64,12 @@ void setup()
   lcd.begin(16,2);
   lcd.backlight();
 
+  lcd.clear();
   lcd.home ();
-  lcd.print("SmartRoaster v1");
-  delay(200);
+  lcd.print("GrovesCoffeeCo");
+  lcd.setCursor(0, 1);
+  lcd.print("version 2.0");
+  delay(400);
   
   Firmata.setFirmwareVersion(FIRMATA_FIRMWARE_MAJOR_VERSION, FIRMATA_FIRMWARE_MINOR_VERSION);
   Firmata.attach(DIGITAL_MESSAGE, digitalWriteCallback);
