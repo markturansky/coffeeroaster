@@ -1,11 +1,11 @@
-from pyfirmata import Arduino, util, OUTPUT, PinAlreadyTakenError
-import time, sys
+from pyfirmata import Arduino, util, OUTPUT
+import time, sys, copy
 
 THERMO_ENV_DATA = 0x0A
 THERMO_BEAN_DATA = 0x0B
 
-#board = Arduino("/dev/cu.wchusbserial1420")
-board = Arduino("/dev/ttyUSB0")
+board = Arduino("/dev/cu.wchusbserial1420")
+# board = Arduino("/dev/ttyUSB0")
 
 isRunning = True
 timer = 0
@@ -24,6 +24,8 @@ def refreshSpec():
             isRunning = specdata[key]
 
 def saveGraphData():
+    global roastdata
+
     template = """//Flot Line Chart
 $(document).ready(function() {
 
@@ -32,6 +34,7 @@ $(document).ready(function() {
 
     function plot() {
         var heater = $DATA;
+        var beans = $BEANDATA;
 
         var options = {
             series: {
@@ -47,11 +50,11 @@ $(document).ready(function() {
             },
             yaxis: {
                 min: 0,
-                max: 500,
+                max: 900,
             },
             tooltip: true,
             tooltipOpts: {
-                content: "'%s' of %x.1 is %y.4",
+                content: "'%s' %y",
                 shifts: {
                     x: -60,
                     y: 25
@@ -62,19 +65,27 @@ $(document).ready(function() {
         var plotObj = $.plot($("#roast-line-chart"), [{
                 data: heater,
                 label: "heater (F)"
-            }],
+            },
+                {
+                    data: beans,
+                    label: "beans (F)"
+                }],
             options);
     }
 });
 """
     temperatures = []
+    beantemps = []
     counter = 0
     for r in roastdata:
-        t = r["EnvTemp"]["Status"]
-        temperatures.append([counter, t])
+        bt = r["BeanTemp"]["Status"]
+        et = r["EnvTemp"]["Status"]
+        temperatures.append([counter, et])
+        beantemps.append([counter, bt])
         counter = counter + 1
     with open("webapp/startbootstrap-sb-admin-2-gh-pages/data/roasterdata.js", "w") as output:
         out = template.replace("$DATA", str(temperatures))
+        out = out.replace("$BEANDATA", str(beantemps))
         output.write(out)
         output.flush()
 
@@ -193,12 +204,12 @@ while isRunning:
                 board.digital[port].write(onOff)
                 components[c]["Status"] = components[c]["Spec"]
         timer = timer + 1
-        snapshot = components.copy()
+        snapshot = copy.deepcopy(components)
         if i % 10 == 0:
             print snapshot
         roastdata.append(snapshot)
         saveGraphData()
-        time.sleep(.5)
+        time.sleep(1)
 
 for c in components:
     if components[c].has_key("Pin"):
