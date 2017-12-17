@@ -18,6 +18,12 @@ class RoastsController < ApplicationController
     @roast = Roast.find(params[:id])
   end
 
+  def destroy
+    @roast = Roast.find(params[:id])
+    @roast.destroy
+    redirect_to roasts_path
+  end
+
   private
     def roast_params
       params.require(:roast).permit(:name)

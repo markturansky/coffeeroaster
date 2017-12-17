@@ -1,87 +1,130 @@
-from threading import Thread, Condition
-from time import sleep
+import pyfirmata, os, copy
 
-class ApiServer:
+THERMO_ENV_DATA = 0x0A
+THERMO_BEAN_DATA = 0x0B
+
+class Roaster:
+    """
+    RoasterBoard is an Arduino firmata client communicating with the hardware roaster itself.
+    """
     def __init__(self):
-        self.name = "Smart Roaster API Server"
-        self.thread = None
-        self.running = True
+        print "initializing board"
+        self.envTemp = 0
+        self.beanTemp = 0
+        self.lastEnvTemp = 0
+        self.lastBeanTemp = 0
 
-    def start(self):
-        self.thread = Thread(name=self.name, target=self.run)
-        self.thread.start()
+        # all roaster tuples are pin/spec
+        self.components = {
+            "heater": (13, 0),
+            "drawfan": (12, 0),
+            "scrollfan": (11, 0),
+            "light": (8, 0),
+            "drum": (9, 0)
+        }
 
-    def run(self):
-        while self.running:
-            print "hi api"
-            sleep(1)
+        self.loadBoard()
 
-    def stop(self):
-        self.running = False
+    def snapshot(self):
+        snapshot = copy.deepcopy(self.components)
+        snapshot["envTemp"] = self.envTemp
+        snapshot["beanTemp"] = self.beanTemp
+        return snapshot
 
-class RoastComponent():
-    def __init__(self, name, pin):
-        """
-        :param name: the name of roaster component (e.g, heater)
-        :param pin: the GPIO pin on the Pi
-        :param condition: the condition used to wait/notify this component of changes
-        :return:
-        """
-        self.name = name
-        self.pin = pin
-        self.condition = Condition()
-        self.running = False
-        self.thread = None
+    def currentTemps(self):
+        return self.envTemp, self.beanTemp
 
-    def start(self):
-        if self.running == False:
-            self.running = True
-            # self.thread = Thread(target=self.run, name=self.name)
-            # self.thread.start()
-
-    def stop(self):
-        if self.running == True:
-            self.running = False
-            self.condition.acquire()
-            self.condition.notify()
-            self.condition.release()
-
-    def poll(self):
-        if self.running:
-            self.condition.acquire()
-            self.condition.notify()
-            self.condition.release()
-
-    def run(self):
-        while self.running:
-            self.condition.acquire()
-            self.condition.wait()
-            print "{} hello world, love {}".format(self.pin, self.name)
-            self.condition.release()
+    def reconcile(self, tick=0):
+        pwm_profile = [
+            [0,0,0,0,0,0,0,0,0,0], # 0 -- all off
+            [1,0,0,0,0,0,0,0,0,0], # 1 -- on 10%
+            [1,0,0,0,0,1,0,0,0,0], # 2 -- on 20%
+            [1,0,0,1,0,0,1,0,0,0], # 3 -- on 30%
+            [1,0,0,1,0,0,1,0,0,1], # 4 -- on 40%
+            [1,0,1,0,1,0,1,0,1,0], # 5 -- on 50%
+            [1,1,1,0,1,0,1,0,1,0], # 6 -- on 60%
+            [1,1,1,0,1,0,1,1,1,0], # 7 -- on 70%
+            [1,1,1,1,1,0,1,1,1,0], # 8 -- on 80%
+            [1,1,1,1,1,1,1,1,1,0], # 9 -- on 90%
+            [1,1,1,1,1,1,1,1,1,1], # 10 -- on 100%
+        ]
+        for key in self.components:
+            pin, value = self.components[key]
+            onOff = pwm_profile[value][tick]
+            self.board.digital[pin].write(onOff)
 
 
-if __name__ == '__main__':
-    components = [
-        RoastComponent(name="Heater", pin=6),
-        RoastComponent(name="Draw Fan", pin=7),
-        RoastComponent(name="Scroll Fan", pin=8),
-        RoastComponent(name="Drum Motor", pin=9),
-    ]
+    def setWhenDifferent(self, key, desiredValue):
+        if self.components.has_key(key):
+            pin, currentValue = self.components[key]
+            if desiredValue != currentValue:
+                print "%s compoent spec change from %s to %s" % (key, currentValue, desiredValue)
+                self.components[key] = (pin, desiredValue)
+        else:
+            print "roaster has no component: %s", key
 
-    # for c in components:
-    #     print c
-    #     c.start()
-    #
-    # for i in range(10):
-    #     for c in components:
-    #         c.poll()
-    #
-    # for c in components:
-    #     c.stop()
 
-    api = ApiServer()
-    api.start()
+    def addEnvTemp(self, temp):
+        avg = (self.lastEnvTemp + temp) / 2
+        self.envTemp = avg
+        self.lastEnvTemp = temp
 
-    sleep(13)
+    def addBeanTemp(self, temp):
+        avg = (self.lastBeanTemp + temp) / 2
+        self.beanTemp = avg
+        self.lastBeanTemp = temp
 
-    api.stop()
+    def loadBoard(self):
+        serialPath = ""
+        for i in range(5):
+            # osx paths for arduino
+            path = "/dev/cu.wchusbserial142%s" % i
+            if os.path.exists(path):
+                serialPath = path
+                break
+            # raspberry pi paths for arduino
+            path = "/dev/ttyUSB%s" % i
+            if os.path.exists(path):
+                serialPath = path
+                break
+
+        if serialPath == "":
+            raise "no serial path found for roaster"
+
+        def getTemp(args):
+            temp = args[0]
+            temp = temp + args[1] * 128
+            temp = temp + args[2] * 256
+            temp = temp + args[3] * 512
+            return temp
+
+        def printEnv(*args, **kwargs):
+            self.addEnvTemp(getTemp(args))
+
+        def printBean(*args, **kwargs):
+            self.addBeanTemp(getTemp(args))
+
+        print "found %s" % path
+        board = pyfirmata.Arduino(path)
+
+        # custom firmata events from arduino that sends temperature data to this python controller
+        board.add_cmd_handler(THERMO_ENV_DATA, printEnv)
+        board.add_cmd_handler(THERMO_BEAN_DATA, printBean)
+
+        for c in self.components:
+            board.digital[self.components[c][0]].mode = pyfirmata.OUTPUT
+        board.digital[13].mode = pyfirmata.OUTPUT
+
+        it = pyfirmata.util.Iterator(board)
+        it.start()
+
+        self.board = board
+
+    def exit(self):
+        for c in self.components:
+            self.board.digital[self.components[c][0]].write(0)
+        self.board.exit()
+
+
+
+

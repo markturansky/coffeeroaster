@@ -10,6 +10,7 @@
         <tr>
             <td><%= roast.name %></td>
             <td><%= link_to 'Show', roast_path(roast) %></td>
+            <td><%= link_to 'Destroy', roast_path(roast), method: :delete, data: { confirm: 'Are you sure?'} %></td>
         </tr>
     <% end %>
 </table>
