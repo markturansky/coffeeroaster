@@ -1,85 +1,54 @@
 from pyfirmata import Arduino, util, OUTPUT
-import time, sys, copy
+import time, sys, copy, os.path
 
 THERMO_ENV_DATA = 0x0A
 THERMO_BEAN_DATA = 0x0B
 
-board = Arduino("/dev/cu.wchusbserial1420")
-# board = Arduino("/dev/ttyUSB0")
+#board = Arduino("/dev/cu.wchusbserial1420")b
+board = Arduino("/dev/ttyUSB0")
 
 isRunning = True
+specFileLastModDate = 0
+jsTemplateFileLastModDate = 0
+template = ""
 timer = 0
 roastdata = []
 normalizingAmount = 0
 
 def refreshSpec():
-    global isRunning
-    with open('roaster.spec', 'r') as content_file:
-        specdata = content_file.read()
-    specdata = eval(specdata)
-    for key in specdata:
-        if components.has_key(key):
-            components[key]["Spec"] = specdata[key]
-        elif key == "isRunning":
-            isRunning = specdata[key]
+    global isRunning, specFileLastModDate
+    lastmod = os.path.getmtime('roaster.spec')
+    if lastmod > specFileLastModDate:
+        print "refresh the spec"
+        with open('roaster.spec', 'r') as content_file:
+            specdata = content_file.read()
+        specFileLastModDate = time.time()     
+        specdata = eval(specdata)
+        for key in specdata:
+            if components.has_key(key):
+                components[key]["Spec"] = specdata[key]
+            elif key == "isRunning":
+                isRunning = specdata[key]
+
+def loadGraphTemplateJS():
+    global template, jsTemplateFileLastModDate
+    lastmod = os.path.getmtime('jstemplate.tmpl')
+    if lastmod > jsTemplateFileLastModDate:
+        with open('jstemplate.tmpl', 'r') as content_file:
+            template = content_file.read()
+    return template
 
 def saveGraphData():
     global roastdata
-
-    template = """//Flot Line Chart
-$(document).ready(function() {
-
-    var offset = 0;
-    plot();
-
-    function plot() {
-        var heater = $DATA;
-        var beans = $BEANDATA;
-
-        var options = {
-            series: {
-                lines: {
-                    show: true
-                },
-                points: {
-                    show: true
-                }
-            },
-            grid: {
-                hoverable: true //IMPORTANT! this is needed for tooltip to work
-            },
-            yaxis: {
-                min: 0,
-                max: 900,
-            },
-            tooltip: true,
-            tooltipOpts: {
-                content: "'%s' %y",
-                shifts: {
-                    x: -60,
-                    y: 25
-                }
-            }
-        };
-
-        var plotObj = $.plot($("#roast-line-chart"), [{
-                data: heater,
-                label: "heater (F)"
-            },
-                {
-                    data: beans,
-                    label: "beans (F)"
-                }],
-            options);
-    }
-});
-"""
+    template = loadGraphTemplateJS()
+    
     temperatures = []
     beantemps = []
     counter = 0
     for r in roastdata:
-        bt = r["BeanTemp"]["Status"]
-        et = r["EnvTemp"]["Status"]
+        timestamp = r[0]
+        bt = r[1]["BeanTemp"]["Status"]
+        et = r[1]["EnvTemp"]["Status"]
         temperatures.append([counter, et])
         beantemps.append([counter, bt])
         counter = counter + 1
@@ -88,8 +57,6 @@ $(document).ready(function() {
         out = out.replace("$BEANDATA", str(beantemps))
         output.write(out)
         output.flush()
-
-
 
 def normalizeTemps():
     global normalizingAmount
@@ -206,8 +173,8 @@ while isRunning:
         timer = timer + 1
         snapshot = copy.deepcopy(components)
         if i % 10 == 0:
-            print snapshot
-        roastdata.append(snapshot)
+            print envTemp, beanTemp
+        roastdata.append([time.time(), snapshot])
         saveGraphData()
         time.sleep(1)
 
