@@ -1,12 +1,5 @@
 import pyfirmata, os, copy, time, threading, os.path
 
-jsTemplateFileLastModDate = 0
-template = ""
-jsTemplate = ""
-jsTemplateTimestamp = 0
-
-currentSpecFileLastModDate = 0
-
 THERMO_ENV_DATA = 0x0A
 THERMO_BEAN_DATA = 0x0B
 
@@ -46,8 +39,9 @@ class Roaster:
         self.roast = None
         self.isRoasting = False
 
-    def roastIt(self, roast):
+    def roastIt(self, roast, specFile):
         if self.roast == None and self.isRoasting == False:
+            self.spec = specFile
             self.roast = roast
             self.isRoasting = True
             self.thread = threading.Thread(name=self.roast.bean, target=self.run)
@@ -58,7 +52,7 @@ class Roaster:
         while isRunning:
             # loop in 10s chunks of time
             for i in range(10):
-                isRunning, specData = refreshSpec("roaster.spec")
+                isRunning, specData = refreshSpec(self.spec)
                 if isRunning == False:
                     break
                 for key in specData:
@@ -110,11 +104,15 @@ class Roaster:
 
 
     def addEnvTemp(self, temp):
+        if self.lastEnvTemp == 0:
+            self.lastEnvTemp = temp
         avg = (self.lastEnvTemp + temp) / 2
         self.envTemp = avg
         self.lastEnvTemp = temp
 
     def addBeanTemp(self, temp):
+        if self.lastBeanTemp == 0:
+            self.lastBeanTemp = temp
         avg = (self.lastBeanTemp + temp) / 2
         self.beanTemp = avg
         self.lastBeanTemp = temp
@@ -149,10 +147,10 @@ class Roaster:
         def printBean(*args, **kwargs):
             self.addBeanTemp(getTemp(args))
 
-        print "found %s" % path
+        print "using %s" % path
         board = pyfirmata.Arduino(path)
 
-        # custom firmata events from arduino that sends temperature data to this python controller
+        # custom firmata events sent from arduino contains temperature data
         board.add_cmd_handler(THERMO_ENV_DATA, printEnv)
         board.add_cmd_handler(THERMO_BEAN_DATA, printBean)
 
@@ -169,6 +167,8 @@ class Roaster:
         for c in self.components:
             self.board.digital[self.components[c][0]].write(0)
         self.board.exit()
+
+currentSpecFileLastModDate = 0
 
 def refreshSpec(roasterSpec):
     global currentSpecFileLastModDate

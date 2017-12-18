@@ -1,6 +1,29 @@
 //Flot Line Chart
 $(document).ready(function() {
 
+    $(".roaster-element").change(function(){
+        var name = $(this).attr("id")
+        var value = $(this).val()
+        var url = "/rest/set?" + name + "=" + value
+        $.getJSON(url, function(data){})
+    });
+
+    $("#btn-cool").click(function(){
+        var url = "/rest/set"
+        $.getJSON(url, {heater:0, drawfan:0,scrollfan:0}, function(data){});
+        $("#heater").val(0)
+        $("#scrollfan").val(10)
+        $("#drawfan").val(10)
+    });
+
+    $("#btn-onoff").click(function(){
+        var url = "/rest/set"
+        $.getJSON(url, {isRunning:0}, function(data){});
+        $("#heater").val(0)
+        $("#scrollfan").val(0)
+        $("#drawfan").val(0)
+    });
+
     var offset = 0;
     plot();
 
@@ -8,7 +31,7 @@ $(document).ready(function() {
         var heater = [];
         var beans = [];
 
-        $.getJSON("rest/data", function(data){
+        $.getJSON("/rest/data", function(data){
             heater = data[0]
             beans = data[1]
 
