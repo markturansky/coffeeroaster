@@ -10,7 +10,7 @@ $(document).ready(function() {
 
     $("#btn-cool").click(function(){
         var url = "/rest/set"
-        $.getJSON(url, {heater:0, drawfan:0,scrollfan:0}, function(data){});
+        $.getJSON(url, {heater:0, drawfan:10,scrollfan:10}, function(data){});
         $("#heater").val(0)
         $("#scrollfan").val(10)
         $("#drawfan").val(10)
