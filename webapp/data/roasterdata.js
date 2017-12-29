@@ -1,5 +1,5 @@
-//Flot Line Chart
 $(document).ready(function() {
+    var roastID = $.url().param("id");
 
     $(".roaster-element").change(function(){
         var name = $(this).attr("id")
@@ -27,11 +27,29 @@ $(document).ready(function() {
     var offset = 0;
     plot();
 
+    var yticks = [];
+    for(var i = 0; i < 1000; i++){
+        if(i % 50 == 0){
+            yticks.push(i)
+        } else {
+            yticks.push()
+        }
+    }
+
+    var xticks = [];
+    for(var i = 0; i < 3600; i++){
+        if(i % 60 == 0){
+            xticks.push(i)
+        } else {
+            xticks.push()
+        }
+    }
+
     function plot() {
         var heater = [];
         var beans = [];
 
-        $.getJSON("/rest/data", function(data){
+        $.getJSON("/rest/data?id="+roastID, function(data){
             heater = data[0]
             beans = data[1]
 
@@ -48,11 +66,12 @@ $(document).ready(function() {
                     hoverable: true //IMPORTANT! this is needed for tooltip to work
                 },
                 //xaxis: {
-                //    mode: "time",
+                //    ticks: xticks,
                 //},
                 yaxis: {
                     min: 0,
-                    max: 900,
+                    max: 1000,
+                    ticks: yticks,
                 },
                 tooltip: true,
                 tooltipOpts: {
