@@ -1,0 +1,128 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Groves Coffee</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="{% static 'roasts/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+
+    <!-- MetisMenu CSS -->
+    <link href="{% static 'roasts/vendor/metisMenu/metisMenu.min.css' %}" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="{% static 'roasts/dist/css/sb-admin-2.css' %}" rel="stylesheet">
+
+    <!-- Morris Charts CSS -->
+    <link href="{% static 'roasts/vendor/morrisjs/morris.css' %}" rel="stylesheet">
+
+    <!-- Custom Fonts -->
+    <link href="{% static 'roasts/vendor/font-awesome/css/font-awesome.min.css' %}" rel="stylesheet" type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+
+
+<body>
+
+<div id="wrapper">
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="{% url 'roasts:index' %}">Groves Coffee</a>
+        </div>
+        <!-- /.navbar-header -->
+
+
+        <div class="navbar-default sidebar" role="navigation">
+            <div class="sidebar-nav navbar-collapse">
+                <ul class="nav" id="side-menu">
+                    <li>
+                        <a href="{% url 'roasts:index' %}"><i class="fa fa-dashboard fa-fw"></i> Dashboard</a>
+                    </li>
+                    <li>
+                        <a href="{% url 'roasts:newroast' %}"><i class="fa fa-plus fa-fw"></i> New Roast</a>
+                    </li>
+                    <li>
+                        <a href="{% url 'roasts:completed' %}"><i class="fa fa-fire fa-fw"></i> Completed Roasts</a>
+                    </li>
+                    <li>
+                        <a href="{% url 'roasts:upcoming' %}"><i class="fa fa-tasks fa-fw"></i> Upcoming Roasts</a>
+                    </li>
+                    <li>
+                        <a href="{% url 'roasts:orders' %}"><i class="fa fa-shopping-cart fa-fw"></i> New Orders</a>
+                    </li>
+                    <li>
+                        <a href="{% url 'roasts:customers' %}"><i class="fa fa-coffee fa-fw"></i> Customers</a>
+                    </li>
+                    <li>
+                        <a href="{% url 'roasts:beans' %}"><i class="fa fa-bell fa-fw"></i> Beans</a>
+                    </li>
+                    <li>
+                        <a href="{% url 'roasts:roastlevels' %}"><i class="fa fa-bar-chart fa-fw"></i> Roast Levels</a>
+                    </li>
+                </ul>
+            </div>
+            <!-- /.sidebar-collapse -->
+        </div>
+        <!-- /.navbar-static-side -->
+    </nav>
+
+
+    <!-- Page Content -->
+    <div id="page-wrapper">
+        <div class="container-fluid">
+            <div class="row">
+                {% block content %}{% endblock %}
+            </div>
+            <!-- /.row -->
+        </div>
+        <!-- /.container-fluid -->
+    </div>
+
+</div>
+<!-- /#wrapper -->
+
+<!-- jQuery -->
+<script src="{% static 'roasts/vendor/jquery/jquery.min.js' %}"></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="{% static 'roasts/vendor/bootstrap/js/bootstrap.min.js' %}"></script>
+
+<!-- Metis Menu Plugin JavaScript -->
+<script src="{% static 'roasts/vendor/metisMenu/metisMenu.min.js' %}"></script>
+
+<!-- Morris Charts JavaScript -->
+<script src="{% static 'roasts/vendor/raphael/raphael.min.js' %}"></script>
+<script src="{% static 'roasts/vendor/morrisjs/morris.min.js' %}"></script>
+<script src="{% static 'roasts/data/morris-data.js' %}"></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="{% static 'roasts/dist/js/sb-admin-2.js' %}"></script>
+
+</body>
+
+</html>
+
+

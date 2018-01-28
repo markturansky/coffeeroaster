@@ -1,0 +1,18 @@
+{% extends "roasts/base.html" %}
+{% block content %}
+
+{%  if roast %}
+
+<div class="col-lg-12">
+    <h1 class="page-header">{{ roast.bean }}</h1>
+    {{ roast.id }} <br/>
+    {{ roast.roast_level }} <br/>
+    <ul>
+        {% for rp in roast.roastsnapshot_set.all %}
+        <li>{{ rp.env_temp}}</li>
+        {% endfor %}
+    </ul>
+</div>
+
+{% endif %}
+{% endblock %}
