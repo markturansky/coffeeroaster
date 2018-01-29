@@ -3,16 +3,225 @@
 
 {%  if roast %}
 
+<script>
+    $(document).ready(function() {
+        var baseURL = "{% url 'roasts:snapshots' roast.id %}";
+        var last = 0;
+        var snapshots = [];
+
+        $(".roaster-element").change(function(){
+            var name = $(this).attr("id")
+            var value = $(this).val()
+            var url = "/rest/set?" + name + "=" + value
+        });
+
+        function refreshSnapshots(){
+            if(snapshots.length > 0){
+                last = snapshots[snapshots.length - 1].id;
+            }
+            var snapshotUrl = baseURL + "?last=" + last;
+            $.getJSON(snapshotUrl, {}, function(data){
+                $.each(data, function(index, s){
+                    snapshots.push(s);
+                });
+            });
+            window.setTimeout(refreshSnapshots, 1000);
+        }
+
+        var yticks = [];
+        for(var i = 0; i < 1000; i++){
+            if(i % 50 == 0){
+                yticks.push(i)
+            } else {
+                yticks.push()
+            }
+        }
+
+        function drawGraph(){
+            var env_temp = [];
+            var bean_temp = [];
+            var heater = [];
+            var drawfan = [];
+            var scrollfan = [];
+            var drum = [];
+            for (var i in snapshots){
+                env_temp.push([i, snapshots[i].env_temp]);
+                bean_temp.push([i, snapshots[i].bean_temp]);
+                heater.push([i, snapshots[i].heater]);
+                drawfan.push([i, snapshots[i].drawfan]);
+                scrollfan.push([i, snapshots[i].scrollfan]);
+                drum.push([i, snapshots[i].drum]);
+            }
+
+            var options = {
+                series: {
+                    lines: {
+                        show: true
+                    },
+                    points: {
+                        show: true
+                    }
+                },
+                grid: {
+                    hoverable: true //IMPORTANT! this is needed for tooltip to work
+                },
+                //xaxis: {
+                //    ticks: xticks,
+                //},
+                yaxis: {
+                    min: 0,
+                    max: 1000,
+                    ticks: yticks,
+                },
+                tooltip: true,
+                tooltipOpts: {
+                    content: "'%s' %y",
+                    shifts: {
+                        x: -60,
+                        y: 25
+                    }
+                },
+                legend: {
+                    position: "nw"
+                },
+            };
+
+            var plotObj = $.plot($("#roast-line-chart"), [
+                {
+                    data: env_temp,
+                    label: "heater (F)"
+                },
+                {
+                    data: bean_temp,
+                    label: "beans (F)"
+                }
+            ], options);
+
+            window.setTimeout(drawGraph, 3000);
+        }
+
+        function fun(){
+            function randomNumberFromRange(min,max){
+                return Math.floor(Math.random()*(max-min+1)+min);
+            }
+
+            // useful for playback! set the value, then trigger change event
+            $("#heater").val(randomNumberFromRange(0, 10))
+            $("#heater").trigger('change')
+
+            window.setTimeout(fun, 1500)
+        }
+
+        refreshSnapshots()
+        drawGraph()
+//        fun()
+    });
+</script>
+
+
+
 <div class="col-lg-12">
-    <h1 class="page-header">{{ roast.bean }}</h1>
-    {{ roast.id }} <br/>
-    {{ roast.roast_level }} <br/>
-    <ul>
-        {% for rp in roast.roastsnapshot_set.all %}
-        <li>{{ rp.env_temp}}</li>
-        {% endfor %}
-    </ul>
+    <h2 class="page-header">{{ roast.bean }} - {{ roast.roast_level }}</h2>
 </div>
+
+    <!-- /.row -->
+    <div class="row">
+        <div class="col-lg-16">
+            <div class="panel panel-default">
+                <div class="panel-heading" id="roast_name">
+                    for {{ roast.customer.name}} - {{ roast.roastdate }}
+                </div>
+                <div class="panel-body">
+                    <div class="flot-chart">
+                        <div class="flot-chart-content" id="roast-line-chart"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-2">
+            <div class="form-group">
+                <label>Heater</label>
+                <select class="form-control roaster-element" id="heater">
+                    <option>0</option>
+                    <option>1</option>
+                    <option>2</option>
+                    <option>3</option>
+                    <option>4</option>
+                    <option>5</option>
+                    <option>6</option>
+                    <option>7</option>
+                    <option>8</option>
+                    <option>9</option>
+                    <option>10</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="col-md-2">
+            <div class="form-group">
+                <label>Draw Fan</label>
+                <select class="form-control roaster-element" id="drawfan">
+                    <option>0</option>
+                    <option>1</option>
+                    <option>2</option>
+                    <option>3</option>
+                    <option>4</option>
+                    <option>5</option>
+                    <option>6</option>
+                    <option>7</option>
+                    <option>8</option>
+                    <option>9</option>
+                    <option>10</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="col-md-2">
+            <div class="form-group">
+                <label>Scroll Fan</label>
+                <select class="form-control roaster-element" id="scrollfan">
+                    <option>0</option>
+                    <option>1</option>
+                    <option>2</option>
+                    <option>3</option>
+                    <option>4</option>
+                    <option>5</option>
+                    <option>6</option>
+                    <option>7</option>
+                    <option>8</option>
+                    <option>9</option>
+                    <option>10</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="col-md-2">
+            <div class="form-group">
+                <label>Drum</label>
+                <select class="form-control roaster-element" id="drum">
+                    <option value="0">Stop</option>
+                    <option value="1">Slow</option>
+                    <option value="2">Fast(er)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="col-md-2">
+            <div class="form-group">
+                <label>Cooldown</label>
+                <button type="button" class="btn btn-primary" id="btn-cool">Cool</button>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="form-group">
+                <label>Roast</label>
+                <button type="button" class="btn btn-danger"  id="btn-onoff">Stop</button>
+            </div>
+        </div>
+    </div>
 
 {% endif %}
 {% endblock %}

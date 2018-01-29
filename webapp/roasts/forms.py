@@ -12,11 +12,8 @@ class NewRoastModelForm(forms.ModelForm):
         fields = [
             'bean',
             'roast_level',
-            'customer'
-            # 'target_temp',
-            # 'weight_before',
-            # 'description',
-            # 'notes'
+            'customer',
+            'weight_before'
         ]
 
 #

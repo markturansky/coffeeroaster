@@ -5,6 +5,32 @@
     <h1 class="page-header">
         Completed Roasts
     </h1>
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered table-hover">
+            <thead>
+            <tr>
+                <th>#</th>
+                <th>Bean</th>
+                <th>Roast Level</th>
+                <th>Customer</th>
+                <th>Roast Date</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for roast in roasts %}
+            <tr>
+                <td>{{ roast.id }}</td>
+                <td>{{ roast.bean.name }}</td>
+                <td>{{ roast.roast_level.name }}</td>
+                <td>{{ roast.customer.name }}</td>
+                <td>{{ roast.roastdate }}</td>
+                <td><a href="{% url 'roasts:detail' roast.id %}">view</a></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 
 {% endblock %}

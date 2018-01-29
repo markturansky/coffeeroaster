@@ -18,6 +18,8 @@ urlpatterns = [
     url(r'^(?P<roast_id>[0-9]+)/$', views.detail, name='detail'),
     # /roasts/4/update
     url(r'^(?P<roast_id>[0-9]+)/update$', views.update, name='update'),
+    # /roasts/4/snapshots
+    url(r'^(?P<roast_id>[0-9]+)/snapshots', views.snapshots, name='snapshots'),
 
     # /roasts/orders
     url(r'^orders$', views.orders, name='orders'),

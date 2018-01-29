@@ -1,0 +1,16 @@
+form .fieldWrapper label {
+    width: 120px;
+}
+
+form .fieldWrapper select {
+    width: 175px;
+}
+
+form .fieldWrapper input[type="number"] {
+    width: 120px;
+}
+
+form .fieldWrapper input[type=submit] {
+    margin-top: 20px;
+    margin-left: 120px;
+}

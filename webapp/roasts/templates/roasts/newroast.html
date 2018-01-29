@@ -9,18 +9,21 @@
 
     {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
 
-    <form action="{% url 'roasts:update' 0 %}" method="post">
-        {% csrf_token %}
+        <form action="{% url 'roasts:update' 0 %}" method="post">
+            {% csrf_token %}
 
-        {% for field in form %}
-        <div class="fieldWrapper">
-            {{ field.errors }}
-            {{ field.label_tag }} {{ field }}
-        </div>
-        {% endfor %}
+            {% for field in form %}
+            <div class="fieldWrapper">
+                {{ field.errors }}
+                {{ field.label_tag }} {{ field }}
+            </div>
+            {% endfor %}
 
-        <input type="submit" class="btn btn-danger" value="Roast It!" />
-    </form>
+            <div class="fieldWrapper">
+                <input type="submit" class="btn btn-danger" value="Roast It!" />
+            </div>
+        </form>
+
 
 </div>
 

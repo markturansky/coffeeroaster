@@ -56,3 +56,14 @@ class RoastSnapshot(models.Model):
     bean_temp = models.IntegerField()
     def __str__(self):
         return "%s %s %s" % (self.heater, self.drawfan, self.scrollfan)
+    def dict(self):
+        return {
+            "id": self.id,
+            "heater": self.heater,
+            "drawfan": self.drawfan,
+            "scrollfan": self.scrollfan,
+            "drum": self.drum,
+            "env_temp": self.env_temp,
+            "bean_temp": self.bean_temp
+        }
+

@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from django.shortcuts import get_object_or_404, render, reverse
 
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
 from roasts.models import Roast, Bean, RoastLevel, Customer
 from roasts.forms import NewRoastModelForm
 
@@ -22,6 +22,18 @@ def update(request, roast_id):
     form = NewRoastModelForm(request.POST)
     roast = form.save()
     return HttpResponseRedirect(reverse('roasts:detail', args=(roast.id,)))
+
+def snapshots(request, roast_id):
+    roast = get_object_or_404(Roast, pk=roast_id)
+    data = []
+    last = request.GET.get('last')
+    if last:
+        for s in roast.roastsnapshot_set.filter(id__gt=last):
+            data.append(s.dict())
+    else:
+        for s in roast.roastsnapshot_set.all():
+            data.append(s.dict())
+    return JsonResponse(data, safe=False)
 
 def completed(request):
     r = Roast.objects.all()
