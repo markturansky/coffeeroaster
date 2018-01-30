@@ -5,27 +5,112 @@
 
 <script>
     $(document).ready(function() {
-        var baseURL = "{% url 'roasts:snapshots' roast.id %}";
+        var baseSnapshotUrl = "{% url 'roasts:snapshots' roast.id %}";
+        var specUpdateUrl = "{% url 'roasts:specupdate' roast.id %}";
+        var roastCtrlUrl = "{% url 'roasts:roastctrl' roast.id %}";
         var last = 0;
         var snapshots = [];
+        var is_active = {% if roast.is_active_roast %}1 {% else %} 0 {% endif %};
+        var any_active = {% if active %}1 {% else %} 0 {% endif %};
+
+        if (!is_active && any_active){
+            console.log("another roast is in progress");
+            $("#btn-onoff-wrapper").hide()
+            $("#activeRoastWarning").hide()
+        }
+
+        if (is_active){
+            console.log("this roast is in progress");
+            $("#btn-onoff").show();
+            $("#btn-onoff").text("Stop");
+            $("#btn-onoff").removeClass("btn-success");
+            $("#btn-onoff").addClass("btn-danger");
+            $("#activeRoastWarning").show()
+        }
+
+        if (!is_active && !any_active){
+            console.log("no roasts are in progress");
+            $("#btn-onoff").show()
+            $("#btn-onoff").text("Start")
+            $("#btn-onoff").removeClass("btn-danger")
+            $("#btn-onoff").addClass("btn-success")
+            $("#activeRoastWarning").hide()
+        }
+
+        $("#btn-onoff").click(function(){
+            // if active, we want False (off), vice versa
+            var onoff = !is_active;
+
+            $.ajax({
+                url: roastCtrlUrl,
+                data: { onoff: onoff},
+                success: function(data, status, xhr){
+                    is_active = onoff;
+                    if(is_active){
+                        console.log("a roast is not currently active");
+                        $("#btn-onoff").text("Stop");
+                        $("#btn-onoff").removeClass("btn-success");
+                        $("#btn-onoff").addClass("btn-danger");
+                        $("#activeRoastWarning").show();
+
+                    } else {
+                        console.log("a roast is not currently active");
+                        $("#btn-onoff").text("Start");
+                        $("#btn-onoff").removeClass("btn-danger");
+                        $("#btn-onoff").addClass("btn-success");
+                        $("#activeRoastWarning").hide();
+                    }
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    alert(textStatus + " " + errorThrown)
+                },
+                dataType: "text"
+            });
+        });
+
+        $("#btn-cool").click(function(){
+            $("#heater").val(0);
+            $("#drawfan").val(10);
+            $("#scrollfan").val(10);
+            $("#drum").val(2);
+            $("#heater").trigger('change');
+        });
 
         $(".roaster-element").change(function(){
             var name = $(this).attr("id")
             var value = $(this).val()
-            var url = "/rest/set?" + name + "=" + value
+
+            var data = {}
+            $(".roaster-element").each(function(){
+                data[$(this).attr("id")] = $(this).val()
+            });
+
+            $.ajax({
+                url: specUpdateUrl,
+                data: data,
+                success: function(data, status, xhr){
+                    console.log(data)
+                },
+                dataType: "text"
+            });
         });
 
         function refreshSnapshots(){
             if(snapshots.length > 0){
                 last = snapshots[snapshots.length - 1].id;
             }
-            var snapshotUrl = baseURL + "?last=" + last;
+            var snapshotUrl = baseSnapshotUrl + "?last=" + last;
             $.getJSON(snapshotUrl, {}, function(data){
                 $.each(data, function(index, s){
                     snapshots.push(s);
                 });
             });
-            window.setTimeout(refreshSnapshots, 1000);
+
+            var delay = 2000;
+            if (snapshots.length == 0){
+                delay = 500;
+            }
+            window.setTimeout(refreshSnapshots, delay);
         }
 
         var yticks = [];
@@ -65,14 +150,24 @@
                 grid: {
                     hoverable: true //IMPORTANT! this is needed for tooltip to work
                 },
-                //xaxis: {
-                //    ticks: xticks,
-                //},
-                yaxis: {
-                    min: 0,
-                    max: 1000,
-                    ticks: yticks,
+                xaxis: {
+                    transform: function(f){
+                        return Math.floor(f);
+                    }
                 },
+                yaxes: [
+                    {
+                        min: 0,
+                        max: 1000,
+                        ticks: yticks,
+                    },{
+                        // align if we are to the right
+                        alignTicksWithAxis: 1,
+                        position: "right",
+//                        ticks: yaxis2ticks,
+                        ticks: [0,1,2,3,4,5,6,7,8,9,10]
+                    }
+                ],
                 tooltip: true,
                 tooltipOpts: {
                     content: "'%s' %y",
@@ -94,27 +189,38 @@
                 {
                     data: bean_temp,
                     label: "beans (F)"
-                }
+                },
+                {
+                    data: heater,
+                    label: "heater",
+                    yaxis: 2
+                },
+                {
+                    data: drawfan,
+                    label: "drawfan",
+                    yaxis: 2
+                },
+                {
+                    data: scrollfan,
+                    label: "scrollfan",
+                    yaxis: 2
+                },
+                {
+                    data: drum,
+                    label: "drum",
+                    yaxis: 2
+                },
             ], options);
 
-            window.setTimeout(drawGraph, 3000);
-        }
-
-        function fun(){
-            function randomNumberFromRange(min,max){
-                return Math.floor(Math.random()*(max-min+1)+min);
+            var delay = 3000;
+            if (env_temp.length == 0){
+                delay = 200;
             }
-
-            // useful for playback! set the value, then trigger change event
-            $("#heater").val(randomNumberFromRange(0, 10))
-            $("#heater").trigger('change')
-
-            window.setTimeout(fun, 1500)
+            window.setTimeout(drawGraph, delay);
         }
 
-        refreshSnapshots()
-        drawGraph()
-//        fun()
+        refreshSnapshots();
+        drawGraph();
     });
 </script>
 
@@ -130,6 +236,7 @@
             <div class="panel panel-default">
                 <div class="panel-heading" id="roast_name">
                     for {{ roast.customer.name}} - {{ roast.roastdate }}
+                    <span id="activeRoastWarning" class="pull-right alert-danger" style="padding: 5px">Active Roast!</span>
                 </div>
                 <div class="panel-body">
                     <div class="flot-chart">
@@ -212,13 +319,14 @@
         <div class="col-md-2">
             <div class="form-group">
                 <label>Cooldown</label>
-                <button type="button" class="btn btn-primary" id="btn-cool">Cool</button>
+                <button type="button" class="form-control btn btn-primary" id="btn-cool">Cool</button>
             </div>
         </div>
-        <div class="col-md-2">
+
+        <div class="col-md-2" id="btn-onoff-wrapper">
             <div class="form-group">
                 <label>Roast</label>
-                <button type="button" class="btn btn-danger"  id="btn-onoff">Stop</button>
+                <button type="button" class="form-control btn" id="btn-onoff" value="0">Stop</button>
             </div>
         </div>
     </div>

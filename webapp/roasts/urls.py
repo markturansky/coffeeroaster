@@ -20,6 +20,10 @@ urlpatterns = [
     url(r'^(?P<roast_id>[0-9]+)/update$', views.update, name='update'),
     # /roasts/4/snapshots
     url(r'^(?P<roast_id>[0-9]+)/snapshots', views.snapshots, name='snapshots'),
+    # /roasts/4/specupdate
+    url(r'^(?P<roast_id>[0-9]+)/specupdate', views.specupdate, name='specupdate'),
+    # /roasts/4/roastctrl
+    url(r'^(?P<roast_id>[0-9]+)/roastctrl', views.roastctrl, name='roastctrl'),
 
     # /roasts/orders
     url(r'^orders$', views.orders, name='orders'),

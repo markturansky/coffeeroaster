@@ -35,6 +35,10 @@ class Roast(models.Model):
     notes = models.CharField(max_length=255,null=True)
     is_favorite = models.BooleanField(default=False)
 
+    # only 1 Roast must have this set to True at a time.
+    # the Roaster thread will watch this roast for any spec changes.
+    is_active_roast = models.BooleanField(default=False)
+
     # spec fields written to one place and observed.
     # snapshots saved as RoastSnapshot w/ timestamp and temperatures
     heater = models.IntegerField(null=True)

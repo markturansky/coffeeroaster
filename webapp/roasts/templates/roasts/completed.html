@@ -19,13 +19,22 @@
             </thead>
             <tbody>
             {% for roast in roasts %}
+            {% if roast.is_active_roast %}
+            <tr class="alert alert-danger">
+            {% else %}
             <tr>
+            {% endif %}
                 <td>{{ roast.id }}</td>
                 <td>{{ roast.bean.name }}</td>
                 <td>{{ roast.roast_level.name }}</td>
                 <td>{{ roast.customer.name }}</td>
                 <td>{{ roast.roastdate }}</td>
-                <td><a href="{% url 'roasts:detail' roast.id %}">view</a></td>
+                <td>
+                    {% if roast.is_active_roast %}
+                    <i class="fa fa-fire fa-fw"></i>
+                    {% endif %}
+                    <a href="{% url 'roasts:detail' roast.id %}">view</a>
+                </td>
             </tr>
             {% endfor %}
             </tbody>
