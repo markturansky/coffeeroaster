@@ -29,7 +29,7 @@ if len(expectedBeans) != len(beans):
 
 
 
-from roasterio.roaster import Roaster
+from roasts.roaster import Roaster
 roaster = Roaster()
 roaster.start()
 

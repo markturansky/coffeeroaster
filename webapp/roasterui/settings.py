@@ -29,7 +29,6 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     'roasts.apps.RoastsConfig',
-    'roasterio.apps.RoasterioConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
