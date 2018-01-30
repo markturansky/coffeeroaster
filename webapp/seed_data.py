@@ -1,19 +1,39 @@
 import django, os
+from django.core.management import call_command
+from django.core.wsgi import get_wsgi_application
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "roasterui.settings")
 django.setup()
+application = get_wsgi_application()
 
 from roasts.models import Roast, Bean, RoastLevel, Customer
 
-for rl in ["Cinnamon", "New England", "American", "City", "Full City", "Vienna", "French", "Italian", "Spanish"]:
-    roastLevel = RoastLevel(name=rl)
-    roastLevel.save()
+expectedRoastLevels = ["Cinnamon", "New England", "American", "City", "Full City", "Vienna", "French", "Italian", "Spanish"]
+roastLevels = RoastLevel.objects.all()
 
-for b in ["Guatemala Antigua Iglesias", "Indonesia Sulawesi"]:
-    bean = Bean(name=b)
-    bean.save()
+if len(roastLevels) != len(expectedRoastLevels):
+    for rl in expectedRoastLevels:
+        roastLevel = RoastLevel(name=rl)
+        roastLevel.save()
 
-c = Customer(name="House")
-c.save()
+expectedBeans = ["Guatemala Antigua Iglesias", "Indonesia Sulawesi"]
+beans = Bean.objects.all()
+
+if len(expectedBeans) != len(beans):
+    for b in expectedBeans:
+        bean = Bean(name=b)
+        bean.save()
+
+    c = Customer(name="House")
+    c.save()
+
+
+
+from roasterio.roaster import Roaster
+roaster = Roaster()
+roaster.start()
+
+call_command('runserver',  '127.0.0.1:8000')
 
 
 # rl = RoastLevel.objects.get(id=1)

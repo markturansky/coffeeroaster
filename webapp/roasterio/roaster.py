@@ -1,18 +1,9 @@
 import pyfirmata, os, copy, time, threading, os.path
 
+from roasts.models import Roast, RoastSnapshot
+
 THERMO_ENV_DATA = 0x0A
 THERMO_BEAN_DATA = 0x0B
-
-class Roast:
-    def __init__(self, bean, targetRoastLevel, targetTemperature):
-        self.bean = bean
-        self.targetRoastLevel = targetRoastLevel
-        self.targetTemperature = targetTemperature
-        self.timestamp = time.gmtime()
-        self.data = []
-
-    def add(self, snapshot):
-        self.data.append([time.time(), snapshot])
 
 class Roaster:
     """
@@ -31,47 +22,72 @@ class Roaster:
             "drawfan": (12, 0),
             "scrollfan": (11, 0),
             "light": (8, 0),
-            "drum": (9, 0)
+            "drum_low": (9, 0),
+            "drum_high": (10, 0)
         }
-        self.loadBoard()
-
         self.thread = None
         self.roast = None
         self.isRoasting = False
 
-    def roastIt(self, roast, specFile):
-        if self.roast == None and self.isRoasting == False:
-            self.spec = specFile
-            self.roast = roast
-            self.isRoasting = True
-            self.thread = threading.Thread(name=self.roast.bean, target=self.run)
-            self.thread.start()
+    def start(self):
+        self.thread = threading.Thread(name="roaster", target=self.run)
+        self.thread.start()
 
     def run(self):
-        isRunning = True
-        while isRunning:
+        self.loadBoard()
+
+        while True:
             # loop in 10s chunks of time
             for i in range(10):
-                isRunning, specData = refreshSpec(self.spec)
-                if isRunning == False:
+                roast = None
+                results = Roast.objects.filter(is_active_roast=1)
+                if results:
+                    roast = results[0]
+
+                # starting a new roast
+                if self.roast == None and roast:
+                    self.roast = roast
+
+                # the previously running roast was stopped
+                if self.roast and not roast:
+                    self.roast = None
                     break
-                for key in specData:
-                    desiredValue = specData[key]
-                    self.setWhenDifferent(key, desiredValue)
+
+                # get out of this loop is no active roast
+                if not roast:
+                    break
+
+                heater = roast.heater
+                drawfan = roast.drawfan
+                scrollfan = roast.scrollfan
+                drum = roast.drum
+                env_temp = self.envTemp
+                bean_temp = self.beanTemp
+
+                self.setWhenDifferent("heater", heater)
+                self.setWhenDifferent("drawfan", drawfan)
+                self.setWhenDifferent("scrollfan", scrollfan)
+                self.setWhenDifferent("heater", heater)
+
+                # stop drum
+                if drum == 0:
+                    self.setWhenDifferent("drum_low", 0)
+                    self.setWhenDifferent("drum_high", 0)
+                # low
+                if drum == 1:
+                    self.setWhenDifferent("drum_low", 10)
+                    self.setWhenDifferent("drum_high", 0)
+                # high
+                if drum == 2:
+                    self.setWhenDifferent("drum_low", 0)
+                    self.setWhenDifferent("drum_high", 10)
+
                 self.reconcile(i)
-                snapshot = self.snapshot()
-                self.roast.add(snapshot)
+
+                snapshot = RoastSnapshot(roast=roast, heater=heater, drawfan=drawfan, scrollfan=scrollfan, drum=drum, env_temp=env_temp, bean_temp=bean_temp)
+                snapshot.save()
                 time.sleep(1)
-        self.isRoasting = False
 
-    def snapshot(self):
-        snapshot = copy.deepcopy(self.components)
-        snapshot["envTemp"] = self.envTemp
-        snapshot["beanTemp"] = self.beanTemp
-        return snapshot
-
-    def currentTemps(self):
-        return self.envTemp, self.beanTemp
 
     def reconcile(self, tick=0):
         pwm_profile = [
@@ -132,7 +148,7 @@ class Roaster:
                 break
 
         if serialPath == "":
-            raise "no serial path found for roaster"
+            raise Exception("no serial path found for roaster")
 
         def getTemp(args):
             temp = args[0]
@@ -162,28 +178,3 @@ class Roaster:
         it.start()
 
         self.board = board
-
-    def exit(self):
-        for c in self.components:
-            self.board.digital[self.components[c][0]].write(0)
-        self.board.exit()
-
-currentSpecFileLastModDate = 0
-
-def refreshSpec(roasterSpec):
-    global currentSpecFileLastModDate
-    isRunning = True
-    actualLastModDate = os.path.getmtime(roasterSpec)
-    components = {}
-    if actualLastModDate > currentSpecFileLastModDate:
-        print "refresh the spec"
-        with open(roasterSpec, 'r') as content_file:
-            specdata = content_file.read()
-        currentSpecFileLastModDate = actualLastModDate
-        specdata = eval(specdata)
-        for key in specdata:
-            if key == "isRunning":
-                isRunning = specdata[key]
-            else:
-                components[key] = specdata[key]
-    return isRunning, components
