@@ -119,10 +119,7 @@
                 });
             });
 
-            var delay = 2000;
-            if (snapshots.length == 0){
-                delay = 1000;
-            }
+            var delay = 5000;
             window.setTimeout(refreshSnapshots, delay);
         }
 
@@ -247,18 +244,14 @@
     });
 </script>
 
-
-
-<div class="col-lg-12">
-    <h2 class="page-header">{{ roast.bean }} - {{ roast.roast_level }}</h2>
-</div>
-
     <!-- /.row -->
     <div class="row">
         <div class="col-lg-16">
             <div class="panel panel-default">
                 <div class="panel-heading" id="roast_name">
-                    for {{ roast.customer.name}} - {{ roast.roastdate }}
+                    <strong>
+                        {{ roast.roast_level }} | {{ roast.bean }} | for {{ roast.customer.name}} | {{ roast.roastdate }}
+                    </strong>
                     <span id="activeRoastWarning" class="pull-right alert-danger" style="padding: 5px">Active Roast!</span>
                 </div>
                 <div class="panel-body">

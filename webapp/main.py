@@ -33,6 +33,8 @@ from roasterio.roaster import Roaster
 roaster = Roaster()
 roaster.start()
 
+print "started roaster thread"
+
 call_command('runserver',  '127.0.0.1:8000')
 
 

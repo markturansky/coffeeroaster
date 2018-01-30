@@ -21,7 +21,7 @@ class Roaster:
             "heater": (13, 0),
             "drawfan": (12, 0),
             "scrollfan": (11, 0),
-            "light": (8, 0),
+            "light": (8, 10),
             "drum_low": (9, 0),
             "drum_high": (10, 0)
         }
@@ -55,6 +55,11 @@ class Roaster:
 
                 # get out of this loop is no active roast
                 if not roast:
+                    self.setWhenDifferent("heater", 0)
+                    self.setWhenDifferent("drawfan", 0)
+                    self.setWhenDifferent("scrollfan", 0)
+                    self.setWhenDifferent("heater", 0)
+                    self.reconcile(0)
                     break
 
                 heater = roast.heater if roast.heater else 0
@@ -108,7 +113,6 @@ class Roaster:
             onOff = pwm_profile[value][tick]
             self.board.digital[pin].write(onOff)
 
-
     def setWhenDifferent(self, key, desiredValue):
         if self.components.has_key(key):
             pin, currentValue = self.components[key]
@@ -117,7 +121,6 @@ class Roaster:
                 self.components[key] = (pin, desiredValue)
         else:
             print "roaster has no component: %s", key
-
 
     def addEnvTemp(self, temp):
         if self.lastEnvTemp == 0:
