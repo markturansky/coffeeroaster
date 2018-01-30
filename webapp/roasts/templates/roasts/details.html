@@ -102,7 +102,7 @@
                 url: specUpdateUrl,
                 data: data,
                 success: function(data, status, xhr){
-                    console.log(data)
+                    console.log("success: " + data)
                 },
                 dataType: "text"
             });
@@ -161,8 +161,14 @@
                     hoverable: true //IMPORTANT! this is needed for tooltip to work
                 },
                 xaxis: {
-                    transform: function(f){
-                        return Math.floor(f);
+                    tickFormatter: function(number){
+                        if(number < 60){
+                            return number + "s"
+                        } else {
+                            var minutes = Math.floor(number / 60)
+                            var remainder = number % 60
+                            return minutes + "m" + remainder + "s"
+                        }
                     }
                 },
                 yaxes: [

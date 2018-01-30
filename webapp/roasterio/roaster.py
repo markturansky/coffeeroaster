@@ -59,6 +59,8 @@ class Roaster:
                     self.setWhenDifferent("drawfan", 0)
                     self.setWhenDifferent("scrollfan", 0)
                     self.setWhenDifferent("heater", 0)
+                    self.setWhenDifferent("drum_low", 0)
+                    self.setWhenDifferent("drum_high", 0)
                     self.reconcile(0)
                     break
 
@@ -92,7 +94,6 @@ class Roaster:
                 snapshot = RoastSnapshot(roast=roast, heater=heater, drawfan=drawfan, scrollfan=scrollfan, drum=drum, env_temp=env_temp, bean_temp=bean_temp)
                 snapshot.save()
                 time.sleep(1)
-
 
     def reconcile(self, tick=0):
         pwm_profile = [
