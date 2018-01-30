@@ -20,11 +20,13 @@
             {% endfor %}
 
             <div class="fieldWrapper">
+                <input type="hidden" name="heater" value="0" />
+                <input type="hidden" name="drawfan" value="0" />
+                <input type="hidden" name="scrollfan" value="0" />
+                <input type="hidden" name="drum" value="0" />
                 <input type="submit" class="btn btn-danger" value="Roast It!" />
             </div>
         </form>
-
-
 </div>
 
 {% endblock %}

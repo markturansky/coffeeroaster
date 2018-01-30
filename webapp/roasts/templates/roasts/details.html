@@ -13,6 +13,19 @@
         var is_active = {% if roast.is_active_roast %}1 {% else %} 0 {% endif %};
         var any_active = {% if active %}1 {% else %} 0 {% endif %};
 
+        var initialValues = {
+            "heater": {% if roast.heater %}{{ roast.heater }}{% else %} 0 {% endif %},
+            "drawfan": {% if roast.drawfan %}{{ roast.drawfan }}{% else %} 0 {% endif %},
+            "scrollfan": {% if roast.scrollfan %}{{ roast.scrollfan }}{% else %} 0 {% endif %},
+            "drum": {% if roast.drum %}{{ roast.drum }}{% else %} 0 {% endif %}
+        }
+
+        for (var key in initialValues){
+            $("#" + key).each(function(){
+                $(this).val(initialValues[key]);
+            });
+        }
+
         if (!is_active && any_active){
             console.log("another roast is in progress");
             $("#btn-onoff-wrapper").hide()
@@ -108,7 +121,7 @@
 
             var delay = 2000;
             if (snapshots.length == 0){
-                delay = 500;
+                delay = 1000;
             }
             window.setTimeout(refreshSnapshots, delay);
         }
@@ -184,32 +197,42 @@
             var plotObj = $.plot($("#roast-line-chart"), [
                 {
                     data: env_temp,
-                    label: "heater (F)"
+                    label: "Env Temp (F)",
+                    points: { show: true},
+                    lines: { show: false},
+                    color: "rgba(255,165,0,1)",
                 },
                 {
                     data: bean_temp,
-                    label: "beans (F)"
+                    label: "Bean Temp (F)",
+                    points: { show: true},
+                    lines: { show: false},
+                    color: "rgba(255,215,0,1)",
                 },
                 {
                     data: heater,
                     label: "heater",
-                    yaxis: 2
+                    yaxis: 2,
+                    points: { show: false},
+                    lines: { show: true},
+                    color: "rgba(255,0,0,0.2)",
                 },
                 {
                     data: drawfan,
                     label: "drawfan",
-                    yaxis: 2
+                    yaxis: 2,
+                    points: { show: false},
+                    lines: { show: true},
+                    color: "rgba(173,216,230,0.2)",
                 },
                 {
                     data: scrollfan,
                     label: "scrollfan",
-                    yaxis: 2
-                },
-                {
-                    data: drum,
-                    label: "drum",
-                    yaxis: 2
-                },
+                    yaxis: 2,
+                    points: { show: false},
+                    lines: { show: true},
+                    color: "rgba(30,144,255,0.2)",
+                }
             ], options);
 
             var delay = 3000;

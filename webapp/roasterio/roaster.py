@@ -57,10 +57,10 @@ class Roaster:
                 if not roast:
                     break
 
-                heater = roast.heater
-                drawfan = roast.drawfan
-                scrollfan = roast.scrollfan
-                drum = roast.drum
+                heater = roast.heater if roast.heater else 0
+                drawfan = roast.drawfan if roast.drawfan else 0
+                scrollfan = roast.scrollfan if roast.scrollfan else 0
+                drum = roast.drum if roast.drum else 0
                 env_temp = self.envTemp
                 bean_temp = self.beanTemp
 
