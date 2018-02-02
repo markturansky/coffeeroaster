@@ -1,16 +1,18 @@
-import pyfirmata, os, copy, time, threading, os.path
+import pyfirmata, os, time, threading, os.path, sys
 
 from roasts.models import Roast, RoastSnapshot
 
 THERMO_ENV_DATA = 0x0A
 THERMO_BEAN_DATA = 0x0B
 
+def debug(str):
+    print str
+
 class Roaster:
     """
     RoasterBoard is an Arduino firmata client communicating with the hardware roaster itself.
     """
     def __init__(self):
-        print "initializing board"
         self.envTemp = 0
         self.beanTemp = 0
         self.lastEnvTemp = 0
@@ -28,15 +30,21 @@ class Roaster:
         self.thread = None
         self.roast = None
         self.isRoasting = False
+        self.board = None
 
     def start(self):
         self.thread = threading.Thread(name="roaster", target=self.run)
         self.thread.start()
+        self.isRoasting = True
+
+    def stop(self):
+        self.isRoasting = False
 
     def run(self):
+        debug("loading Arduino")
         self.loadBoard()
 
-        while True:
+        while self.isRoasting:
             # loop in 10s chunks of time
             for i in range(10):
                 roast = None
@@ -46,15 +54,19 @@ class Roaster:
 
                 # starting a new roast
                 if self.roast == None and roast:
+                    debug("New roast!")
                     self.roast = roast
 
                 # the previously running roast was stopped
                 if self.roast and not roast:
+                    debug("Previously running roast was stopped")
                     self.roast = None
                     break
 
-                # get out of this loop is no active roast
+                # get out of this loop if no active roast
                 if not roast:
+                    debug("No roast. All off.")
+                    time.sleep(1)
                     self.setWhenDifferent("heater", 0)
                     self.setWhenDifferent("drawfan", 0)
                     self.setWhenDifferent("scrollfan", 0)
@@ -70,6 +82,8 @@ class Roaster:
                 drum = roast.drum if roast.drum else 0
                 env_temp = self.envTemp
                 bean_temp = self.beanTemp
+
+                print "heater = %s drawfan = %s scrollfan = %s drum = %s, env_temp = %s bean_temp = %s" % (heater, drawfan, scrollfan, drum, env_temp, bean_temp)
 
                 self.setWhenDifferent("heater", heater)
                 self.setWhenDifferent("drawfan", drawfan)
@@ -94,6 +108,7 @@ class Roaster:
                 snapshot = RoastSnapshot(roast=roast, heater=heater, drawfan=drawfan, scrollfan=scrollfan, drum=drum, env_temp=env_temp, bean_temp=bean_temp)
                 snapshot.save()
                 time.sleep(1)
+        self.board.exit()
 
     def reconcile(self, tick=0):
         pwm_profile = [
@@ -118,7 +133,7 @@ class Roaster:
         if self.components.has_key(key):
             pin, currentValue = self.components[key]
             if desiredValue != currentValue:
-                print "%s compoent spec change from %s to %s" % (key, currentValue, desiredValue)
+                print "%s spec change from %s to %s" % (key, currentValue, desiredValue)
                 self.components[key] = (pin, desiredValue)
         else:
             print "roaster has no component: %s", key
@@ -168,17 +183,17 @@ class Roaster:
             self.addBeanTemp(getTemp(args))
 
         print "using %s" % path
-        board = pyfirmata.Arduino(path)
+        self.board = pyfirmata.Arduino(path)
 
         # custom firmata events sent from arduino contains temperature data
-        board.add_cmd_handler(THERMO_ENV_DATA, printEnv)
-        board.add_cmd_handler(THERMO_BEAN_DATA, printBean)
+        self.board.add_cmd_handler(THERMO_ENV_DATA, printEnv)
+        self.board.add_cmd_handler(THERMO_BEAN_DATA, printBean)
 
         for c in self.components:
-            board.digital[self.components[c][0]].mode = pyfirmata.OUTPUT
-        board.digital[13].mode = pyfirmata.OUTPUT
+            self.board.digital[self.components[c][0]].mode = pyfirmata.OUTPUT
+        self.board.digital[13].mode = pyfirmata.OUTPUT
 
-        it = pyfirmata.util.Iterator(board)
+        it = pyfirmata.util.Iterator(self.board)
         it.start()
 
-        self.board = board
+

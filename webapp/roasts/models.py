@@ -26,7 +26,7 @@ class Bean(models.Model):
 class Roast(models.Model):
     bean = models.ForeignKey(Bean)
     roast_level = models.ForeignKey(RoastLevel)
-    customer = models.ForeignKey(Customer)
+    customer = models.ForeignKey(Customer, null=True)
     roast_date = models.DateTimeField(name='roastdate', auto_now_add=True)
     target_temp = models.IntegerField(null=True)
     weight_before = models.FloatField(null=True)
