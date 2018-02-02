@@ -4,6 +4,7 @@ platform='unknown'
 unamestr=`uname`
 if [[ "$unamestr" == 'Linux' ]]; then
    platform='linux'
+   /usr/bin/python djangoserver.py &
    /usr/bin/python roaster.py
 elif [[ "$unamestr" == 'Darwin' ]]; then
    platform='osx'
